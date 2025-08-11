@@ -1,0 +1,202 @@
+PARSER_BEGIN(Bela)
+import java.io.*;
+public class Bela {
+
+  public static void main(String args[]) throws ParseException, IOException {
+    Bela analisador = new Bela(new FileInputStream(args[0]));
+    analisador.BELA();
+  }
+
+}
+PARSER_END(Bela)
+
+SKIP: {
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+TOKEN: {
+  <MAIN: "main">
+| <VAR: "var">
+| <APAR: "(">
+| <FPAR: ")">
+| <ACHAVES: "{">
+| <FCHAVES: "}">
+| <FLOAT: "float">
+| <BOOL: "bool">
+| <VOID: "void">
+| <SEMICOLON: ";">
+| <ATRIB: "=">
+| <IF: "if">
+| <THEN: "then">
+| <WHILE: "while">
+| <ELSE: "else">
+| <RETURN: "return">
+| <READI: "readInput">
+| <PRINTLN: "printLn">
+| <TRUE: "true">
+| <FALSE: "false">
+| <ADD: "+">
+| <SUB: "-">
+| <MULT: "*">
+| <DIV: "/">
+| <AND: "&&">
+| <OR: "||">
+| <LT: "<">
+| <GT: ">">
+| <EQUAL: "==">
+| <COMMA: ",">
+| <FUN: "fun">
+}
+
+TOKEN: {
+  <NUM: (["0"-"9"])+ ("." (["0"-"9"])+)? (["E","e"] (["+","-"])? (["0"-"9"])+)?> 
+| <ID: ["a"-"z","A"-"Z"] (["a"-"z","A"-"Z","0"-"9"])* ("_" (["a"-"z","A"-"Z","0"-"9"])+)*>
+}
+
+Prog BELA() :
+{Main main; ArrayList<Fun> funs;}
+{
+  main=MAIN_() (funs=FUNCAO())?
+  
+  {return new Prog(main,funs);}
+  
+  <EOF>
+}
+
+Main MAIN_():
+{ArrayList<VarDecl> vars; ArrayList<Comando> coms;}
+{
+  <MAIN> <APAR> <FPAR> <ACHAVES> vars=VARDECL() coms=SEQCOMANDOS() <FCHAVES>
+  {return new Main(vars,coms);}
+}
+
+ArrayList<VarDecl> VARDECL():
+{ArrayList<VarDecl> vars = new ArrayList(); String tipo; Token var;}
+{
+  ( <VAR> tipo=TIPO() var=<ID> <SEMICOLON>   {vars.add(new VarDecl(tipo,var.image))} )*
+
+  {return vars;}
+}
+
+String TIPO():
+{Token tipo}
+{
+  tipo = <FLOAT> | tipo = <BOOL> | tipo = <VOID>
+
+  {return tipo.image;}
+}
+
+ArrayList<Comando> SEQCOMANDOS():
+{ArrayList<Comando> coms = new ArrayList(); Comando com;}
+{
+  (com = COMANDO() {coms.add(com)})*
+
+  {return coms;}
+}
+
+Comando COMANDO():
+{Comando com; Exp exp; ArrayList<Comando> bloco; Token tok;}
+{
+  tok = <ID> com=C_LINHA(tok.image) |
+  <IF> exp = EXP() <THEN> <ACHAVES> bloco=SEQCOMANDOS() <FCHAVES> <SEMICOLON> {com = new Cif(0, exp, bloco);}|
+  <WHILE> exp = EXP() <ACHAVES> bloco = SEQCOMANDOS() <FCHAVES> <SEMICOLON> {com = new CWhile(0, exp, bloco);}|
+  <RETURN> exp = EXP() <SEMICOLON> {com = new CReturn(0, exp);}|
+  <PRINTLN> exp = EXP() <SEMICOLON> {com = new CPrint(0, exp);}
+
+  {return com;}
+}
+
+Comando C_LINHA(String val):
+{Exp exp; ArrayList<Exp> args; Comando com;}
+{
+  <ATRIB> exp = D_LINHA(val) | 
+  <APAR> args = (LISTAEXP())? <FPAR> <SEMICOLON> {com = new CChamadaFun(0, val, args);}
+
+  {return com;}
+}
+
+Comando D_LINHA(String val):
+{Exp exp, Comando com;}
+{
+  exp = EXP() <SEMICOLON> {com = new CAtribuicao(0, val, exp)}  | <READI> <APAR> <FPAR> <SEMICOLON> {com = new CReadInput(0, val)}
+
+  {return com;}
+}
+
+// EXPRESSÕES COM PRECEDÊNCIA
+
+void EXP():
+{}
+{
+  EXP_OR()
+}
+
+void EXP_OR():
+{}
+{
+  EXP_REL() ( <OR> EXP_REL() )*
+}
+
+void EXP_REL():
+{}
+{
+  EXP_ADD() ( (<LT> | <GT> | <EQUAL>) EXP_ADD() )*
+}
+
+void EXP_ADD():
+{}
+{
+  EXP_MUL() ( (<ADD> | <SUB>) EXP_MUL() )*
+}
+
+void EXP_MUL():
+{}
+{
+  EXP_ATOM() ( (<MULT> | <DIV>) EXP_ATOM() )*
+}
+
+void EXP_ATOM():
+{}
+{
+    <APAR> EXP() <FPAR>                   // expressão entre parênteses
+  | <ID> (<APAR> (LISTAEXP())? <FPAR>)?  // variável ou chamada de função
+  | <NUM>
+  | <TRUE>
+  | <FALSE>
+}
+
+String OP():
+{Token token;}
+{
+  token = <ADD> | token = <SUB> | token = <MULT> | token = <DIV> | token = <AND> | token = <OR> | token = <LT> | token = <GT> | token = <EQUAL>
+
+  {return token.image;}
+}
+
+ArrayList<Exp> LISTAEXP():
+{ArrayList<Exp> exps; Exp exp;}
+{
+  exp = EXP() {exps.add(exp)}(<COMMA> exp = EXP() {exps.add(exp)})*
+
+  {return exps;}
+}
+
+ArrayList<Fun> FUNCAO():
+{ArrayList<Fun> bloco; Token nome; ArrayList<ParamFormalFun> params; String retorno; ArrayList<VarDecl> vars; ArrayList<Comando> body}
+{
+  <FUN> retorno = TIPO() nome = <ID> <APAR> params = (LISTAARG())? <FPAR> <ACHAVES> vars = VARDECL() body = SEQCOMANDOS() <FCHAVES> {bloco.add(new Fun(nome.image, params, retorno, vars, body))}
+  (<FUN> retorno = TIPO() nome = <ID> <APAR> params = (LISTAARG())? <FPAR> <ACHAVES> vars = VARDECL() body = SEQCOMANDOS() <FCHAVES> {bloco.add(new Fun(nome.image, params, retorno, vars, body))})*
+
+  {return bloco;}
+}
+
+ArrayList<ParamFormalFun> LISTAARG():
+{ArrayList<ParamFormalFun> params; String tipo; Token var}
+{
+  tipo = TIPO() var = <ID> {params.add(new ParamFormalFun(tipo, var.image))}(<COMMA> tipo = TIPO() var = <ID> {params.add(new ParamFormalFun(tipo, var.image))})*
+
+  {return params;}
+}
