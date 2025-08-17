@@ -101,7 +101,7 @@ Comando COMANDO():
 {Comando com; Exp exp; ArrayList<Comando> bloco; Token tok;}
 {
   tok = <ID> com=C_LINHA(tok.image) |
-  <IF> exp = EXP() <THEN> <ACHAVES> bloco=SEQCOMANDOS() <FCHAVES> <SEMICOLON> {com = new Cif(0, exp, bloco);}|
+  <IF> exp = EXP() <THEN> <ACHAVES> bloco=SEQCOMANDOS() <FCHAVES> <SEMICOLON> {com = new CIf(0, exp, bloco);}|
   <WHILE> exp = EXP() <ACHAVES> bloco = SEQCOMANDOS() <FCHAVES> <SEMICOLON> {com = new CWhile(0, exp, bloco);}|
   <RETURN> exp = EXP() <SEMICOLON> {com = new CReturn(0, exp);}|
   <PRINTLN> exp = EXP() <SEMICOLON> {com = new CPrint(0, exp);}
@@ -128,44 +128,68 @@ Comando D_LINHA(String val):
 
 // EXPRESSÕES COM PRECEDÊNCIA
 
-void EXP():
-{}
+Exp EXP():
+{Exp exp;}
 {
-  EXP_OR()
+    exp = EXP_OR()
+    {return exp;}
 }
 
-void EXP_OR():
-{}
+Exp EXP_OR():
+{Exp e1, e2; Token op;}
 {
-  EXP_REL() ( <OR> EXP_REL() )*
+    e1 = EXP_REL()
+    (
+        op = <OR> e2 = EXP_REL() {e1 = new EOpExp(op.image, e1, e2);}
+    )*
+    {return e1;}
 }
 
-void EXP_REL():
-{}
+Exp EXP_REL():
+{Exp e1, e2; Token op;}
 {
-  EXP_ADD() ( (<LT> | <GT> | <EQUAL>) EXP_ADD() )*
+    e1 = EXP_ADD()
+    (
+        op = (<LT> | <GT> | <EQUAL>) e2 = EXP_ADD() {e1 = new EOpExp(op.image, e1, e2);}
+    )*
+    {return e1;}
 }
 
-void EXP_ADD():
-{}
+Exp EXP_ADD():
+{Exp e1, e2; Token op;}
 {
-  EXP_MUL() ( (<ADD> | <SUB>) EXP_MUL() )*
+    e1 = EXP_MUL()
+    (
+        op = (<ADD> | <SUB>) e2 = EXP_MUL() {e1 = new EOpExp(op.image, e1, e2);}
+    )*
+    {return e1;}
 }
 
-void EXP_MUL():
-{}
+Exp EXP_MUL():
+{Exp e1, e2; Token op;}
 {
-  EXP_ATOM() ( (<MULT> | <DIV>) EXP_ATOM() )*
+    e1 = EXP_ATOM()
+    (
+        op = (<MULT> | <DIV>) e2 = EXP_ATOM() {e1 = new EOpExp(op.image, e1, e2);}
+    )*
+    {return e1;}
 }
 
-void EXP_ATOM():
-{}
+Exp EXP_ATOM():
+{Token token; Exp result = null; Token idToken; ArrayList<Exp> args = null;}
 {
-    <APAR> EXP() <FPAR>                   // expressão entre parênteses
-  | <ID> (<APAR> (LISTAEXP())? <FPAR>)?  // variável ou chamada de função
-  | <NUM>
-  | <TRUE>
-  | <FALSE>
+    (
+        <APAR> result = EXP() <FPAR>
+    |   idToken = <ID>
+        (
+            <APAR> (args = LISTAEXP())? <FPAR> {result = new EChamadaFun(idToken.image, args);}
+        |   {result = new EVar(idToken.image);}
+        )
+    |   token = <NUM> {result = new EFloat(token.image);}
+    |   token = <TRUE> {result = new ETrue();}
+    |   token = <FALSE> {result = new EFalse();}
+    )
+    {return result;}
 }
 
 String OP():
