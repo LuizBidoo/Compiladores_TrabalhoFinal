@@ -76,13 +76,13 @@ Main MAIN_():
 ArrayList<VarDecl> VARDECL():
 {ArrayList<VarDecl> vars = new ArrayList(); String tipo; Token var;}
 {
-  ( <VAR> tipo=TIPO() var=<ID> <SEMICOLON>   {vars.add(new VarDecl(tipo,var.image))} )*
+  ( <VAR> tipo=TIPO() var=<ID> <SEMICOLON>   {vars.add(new VarDecl(tipo,var.image));} )*
 
   {return vars;}
 }
 
 String TIPO():
-{Token tipo}
+{Token tipo;}
 {
   tipo = <FLOAT> | tipo = <BOOL> | tipo = <VOID>
 
@@ -92,7 +92,7 @@ String TIPO():
 ArrayList<Comando> SEQCOMANDOS():
 {ArrayList<Comando> coms = new ArrayList(); Comando com;}
 {
-  (com = COMANDO() {coms.add(com)})*
+  (com = COMANDO() {coms.add(com)};)*
 
   {return coms;}
 }
@@ -118,12 +118,27 @@ Comando C_LINHA(String val):
   {return com;}
 }
 
-Comando D_LINHA(String val):
-{Exp exp, Comando com;}
+Comando C_LINHA(String val):
+{Exp exp; ArrayList<Exp> args; Comando com = null;}  // Inicialize com = null
 {
-  exp = EXP() <SEMICOLON> {com = new CAtribuicao(0, val, exp)}  | <READI> <APAR> <FPAR> <SEMICOLON> {com = new CReadInput(0, val)}
-
-  {return com;}
+    (
+        // Alternativa 1: Atribuição
+        <ATRIB>
+        (
+            exp = EXP() <SEMICOLON> {com = new CAtribuicao(val, exp);}
+        |   <READI> <APAR> <FPAR> <SEMICOLON> {com = new CReadInput(val);}
+        )
+    )
+    |
+    (
+        // Alternativa 2: Chamada de função
+        <APAR>
+        (args = LISTAEXP())?
+        <FPAR>
+        <SEMICOLON>
+        {com = new CChamadaFun(val, args);}
+    )
+    {return com;}
 }
 
 // EXPRESSÕES COM PRECEDÊNCIA
