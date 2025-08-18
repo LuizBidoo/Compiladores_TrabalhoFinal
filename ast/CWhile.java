@@ -15,7 +15,15 @@ public class CWhile extends Comando{
 	} 
 
 	public String toString() {
-		return "while (x > 0) {bla}";	
+		String result = "while (" + exp.toString() + ") {\n";
+
+		for(Comando c: bloco){
+			result += "\t" +  c.toString();
+		}
+
+		result += "\t}\n";
+
+		return result;	
 	}
 
 }

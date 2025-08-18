@@ -15,7 +15,15 @@ public class CIf extends Comando{
 	} 
 
 	public String toString() {
-		return "if (a == 0) { x = 1; }";	
+		String result = "if (" + exp.toString() + ") {\n";
+
+		for(Comando c: bloco){
+			result += "\t" +  c.toString();
+		}
+
+		result += "\t}\n";
+
+		return result;	
 	}
 
 }

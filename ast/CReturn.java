@@ -15,7 +15,7 @@ public class CReturn extends Comando{
 	} 
 
 	public String toString() {
-		return "return;";	
+		return "return " + exp + ";\n";	
 	}
 
 }

@@ -17,8 +17,12 @@ public class CChamadaFun extends Comando{
 	public String toString() {
 		String result = fun + "(";	
 		for(Exp e: args){
-			result += e.toString();
-		}
+			result += e.toString() + ", ";
+		} 
+
+		result = result.substring(0, result.length() - 2);
+
+		result += ");\n";
 		return result;
 	}
 

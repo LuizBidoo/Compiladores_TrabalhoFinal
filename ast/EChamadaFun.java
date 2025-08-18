@@ -18,7 +18,7 @@ public class EChamadaFun extends Exp{
 			result += e.toString() + ", ";
 		}
 
-		result = result.substring(0, result.length() - 2) + ") {\n";
+		result = result.substring(0, result.length() - 2) + ");\n";
 		return result;
 	}
 

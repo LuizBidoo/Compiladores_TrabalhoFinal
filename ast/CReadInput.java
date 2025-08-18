@@ -13,7 +13,7 @@ public class CReadInput extends Comando{
 	} 
 
 	public String toString() {
-		return "Scanner myObj = new Scanner(System.in);";	
+		return var + " = sc.nextLine();\n";	
 	}
 
 }

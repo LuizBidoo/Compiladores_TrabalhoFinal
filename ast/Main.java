@@ -15,6 +15,7 @@ public class Main{
 
 	public String toString() {
 		String AAAAAA = "public static void main(){\n";
+		AAAAAA += "    static Scanner sc = new Scanner(System.in);\n\n";
 		for(Comando c: coms)
 		{
 			AAAAAA +=  "    " + c.toString();
