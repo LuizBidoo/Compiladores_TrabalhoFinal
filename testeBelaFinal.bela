@@ -1,0 +1,34 @@
+main() {
+  var bool isOn;
+  var float op;
+  var float a;
+  var float b;
+  var float result;
+
+  isOn = true;
+  while (isOn == true) {
+    op = readInput();
+
+    if (op == 1.0) then {
+      a = readInput();
+      b = readInput();
+      result = soma(a, b);
+    };
+
+    if (op == 2.0) then {
+      a = readInput();
+      b = readInput();
+      result = subtracao(a, b);
+    };
+  };
+
+  printLn result;
+}
+
+fun float soma(float a, float b) {
+  return (a + b);
+}
+
+fun float subtracao(float a, float b) {
+  return (a - b);
+}
