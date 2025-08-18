@@ -1,4 +1,5 @@
 PARSER_BEGIN(Bela)
+import ast.*;
 import java.io.*;
 import java.util.*;
 
@@ -60,7 +61,7 @@ TOKEN: {
 }
 
 Prog BELA() :
-{Main main; ArrayList<Fun> funs;}
+{Main main; ArrayList<Fun> funs = new ArrayList<Fun>();}
 {
   main=MAIN_() (funs=FUNCAO())?
   {return new Prog(main, funs);}
@@ -68,14 +69,14 @@ Prog BELA() :
 }
 
 Main MAIN_():
-{ArrayList<VarDecl> vars; ArrayList<Comando> coms;}
+{ArrayList<VarDecl> vars; ArrayList<Comando> coms = new ArrayList<Comando>();}
 {
   <MAIN> <APAR> <FPAR> <ACHAVES> vars=VARDECL() coms=SEQCOMANDOS() <FCHAVES>
   {return new Main(vars,coms);}
 }
 
 ArrayList<VarDecl> VARDECL():
-{ArrayList<VarDecl> vars; String tipo; Token var;}
+{ArrayList<VarDecl> vars = new ArrayList<VarDecl>(); String tipo; Token var;}
 {
   ( <VAR> tipo=TIPO() var=<ID> <SEMICOLON> {vars.add(new VarDecl(tipo,var.image));} )*
   {return vars;}
@@ -88,34 +89,41 @@ String TIPO():
   {return tipo.image;}
 }
 
+String OP():
+{Token t;}
+{
+  (t=<ADD> | t=<SUB> | t=<MULT> | t=<DIV> | t=<AND> | t=<OR> | t=<LT> | t=<GT> | t=<EQUAL>)
+  {return t.image;}
+}
+
 ArrayList<Comando> SEQCOMANDOS():
-{ArrayList<Comando> coms; Comando com;}
+{ArrayList<Comando> coms = new ArrayList<Comando>(); Comando com;}
 {
   (com = COMANDO() {coms.add(com);})*
   {return coms;}
 }
 
 Comando COMANDO():
-{Comando com; Exp exp; ArrayList<Comando> bloco; Token tok;}
+{Comando com; Exp exp; ArrayList<Comando> bloco = new ArrayList<Comando>(); Token tok;}
 {
   (
     tok = <ID> com=C_LINHA(tok.image) 
-  | <IF> exp = EXP() <THEN> <ACHAVES> bloco=SEQCOMANDOS() <FCHAVES> <SEMICOLON> {com = new CIf(exp, bloco);}
-  | <WHILE> exp = EXP() <ACHAVES> bloco = SEQCOMANDOS() <FCHAVES> <SEMICOLON> {com = new CMhile(exp, bloco);}
-  | <RETURN> exp = EXP() <SEMICOLON> {com = new CReturn(exp);}
-  | <PRINTLN> exp = EXP() <SEMICOLON> {com = new CPrint(exp);}
+  | <IF> exp = EXP() <THEN> <ACHAVES> bloco=SEQCOMANDOS() <FCHAVES> <SEMICOLON> {com = new CIf(0, exp, bloco);}
+  | <WHILE> exp = EXP() <ACHAVES> bloco = SEQCOMANDOS() <FCHAVES> <SEMICOLON> {com = new CWhile(0, exp, bloco);}
+  | <RETURN> exp = EXP() <SEMICOLON> {com = new CReturn(0, exp);}
+  | <PRINTLN> exp = EXP() <SEMICOLON> {com = new CPrint(0, exp);}
   )
   {return com;}
 }
 
 Comando C_LINHA(String val):
-{Exp exp; ArrayList<Exp> args; Comando com = null;}
+{Exp exp; ArrayList<Exp> args = new ArrayList<Exp>(); Comando com = null;}
 {
-  (
+  ((
     <ATRIB> 
     (
-        exp = EXP() <SEMICOLON> {com = new CAtribuicao(val, exp);}
-    |   <READI> <APAR> <FPAR> <SEMICOLON> {com = new CReadInput(val);}
+        exp = EXP() <SEMICOLON> {com = new CAtribuicao(0, val, exp);}
+    |   <READI> <APAR> <FPAR> <SEMICOLON> {com = new CReadInput(0, val);}
     )
   )
   |
@@ -124,70 +132,22 @@ Comando C_LINHA(String val):
     (args = LISTAEXP())? 
     <FPAR> 
     <SEMICOLON> 
-    {com = new CChamadaFun(val, args);}
-  )
+    {com = new CChamadaFun(0, val, args);}
+  ))
   {return com;}
 }
 
 // EXPRESSÕES COM PRECEDÊNCIA
 
 Exp EXP():
-{Exp exp;}
+{Exp exp; Exp exp1; Exp exp2; String op;}
 {
-  exp = EXP_OR()
+  ((<APAR> exp1=EXP() op = OP() exp2=EXP() <FPAR> {exp = new EOpExp(op, exp1, exp2);}) | exp=EXP_ATOM())
   {return exp;}
 }
 
-Exp EXP_OR():
-{Exp e1 = null, e2; Token op;}
-{
-  e1 = EXP_REL()
-  (
-    op = <OR> 
-    e2 = EXP_REL() 
-    {e1 = new EOpExp(op.image, e1, e2);}
-  )*
-  {return e1;}
-}
-
-Exp EXP_REL():
-{Exp e = null, e2; Token op;}
-{
-  e = EXP_ADD()
-  (
-    op = <LT> | <GT> | <EQUAL>
-    e2 = EXP_ADD() 
-    {e = new EOpExp(op.image, e, e2);}
-  )*
-  {return e;}
-}
-
-Exp EXP_ADD():
-{Exp e1 = null, e2; Token op;}
-{
-  e1 = EXP_MUL()
-  (
-    op = <ADD> | <SUB>
-    e2 = EXP_MUL() 
-    {e1 = new EOpExp(op.image, e1, e2);}
-  )*
-  {return e1;}
-}
-
-Exp EXP_MUL():
-{Exp e1 = null, e2; Token op;}
-{
-  e1 = EXP_ATOM()
-  (
-    op = <MULT> | <DIV>
-    e2 = EXP_ATOM() 
-    {e1 = new EOpExp(op.image, e1, e2);}
-  )*
-  {return e1;}
-}
-
 Exp EXP_ATOM():
-{Token token; Exp result = null; Token idToken; ArrayList<Exp> args = null;}
+{Token token = new Token(); Exp result = null; Token idToken = new Token(); ArrayList<Exp> args = null;}
 {
   (
       <APAR> result = EXP() <FPAR>
@@ -199,7 +159,7 @@ Exp EXP_ATOM():
           {result = new EChamadaFun(idToken.image, args);}
       |   {result = new EVar(idToken.image);}
       )
-    | token = <NUM> {result = new EFloat(token.image);}
+    | token = <NUM> {result = new EFloat(Float.parseFloat(token.image));}
     | token = <TRUE> {result = new ETrue();}
     | token = <FALSE> {result = new EFalse();}
   )
@@ -207,7 +167,7 @@ Exp EXP_ATOM():
 }
 
 ArrayList<Exp> LISTAEXP():
-{ArrayList<Exp> exps; Exp exp;}
+{ArrayList<Exp> exps = new ArrayList(); Exp exp;}
 {
   exp = EXP() {exps.add(exp);}(<COMMA> exp = EXP() {exps.add(exp);})*
 
@@ -215,7 +175,7 @@ ArrayList<Exp> LISTAEXP():
 }
 
 ArrayList<Fun> FUNCAO():
-{ArrayList<Fun> bloco; Token nome; ArrayList<ParamFormalFun> params; String retorno; ArrayList<VarDecl> vars; ArrayList<Comando> body;}
+{ArrayList<Fun> bloco = new ArrayList(); Token nome; ArrayList<ParamFormalFun> params = new ArrayList(); String retorno; ArrayList<VarDecl> vars; ArrayList<Comando> body = new ArrayList();}
 {
   <FUN> retorno = TIPO() nome = <ID> <APAR> (params = LISTAARG())? <FPAR> <ACHAVES> vars = VARDECL() body = SEQCOMANDOS() <FCHAVES> {bloco.add(new Fun(nome.image, params, retorno, vars, body));}
   (<FUN> retorno = TIPO() nome = <ID> <APAR> (params = LISTAARG())? <FPAR> <ACHAVES> vars = VARDECL() body = SEQCOMANDOS() <FCHAVES> {bloco.add(new Fun(nome.image, params, retorno, vars, body));})*
@@ -224,7 +184,7 @@ ArrayList<Fun> FUNCAO():
 }
 
 ArrayList<ParamFormalFun> LISTAARG():
-{ArrayList<ParamFormalFun> params; String tipo; Token var;}
+{ArrayList<ParamFormalFun> params = new ArrayList(); String tipo; Token var;}
 {
   tipo = TIPO() var = <ID> {params.add(new ParamFormalFun(tipo, var.image));}(<COMMA> tipo = TIPO() var = <ID> {params.add(new ParamFormalFun(tipo, var.image));})*
 
