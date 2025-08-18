@@ -15,7 +15,7 @@ public class CPrint extends Comando{
 	} 
 
 	public String toString() {
-		return "System.out.println(x);";	
+		return "System.out.println(x);\n";	
 	}
 
 }

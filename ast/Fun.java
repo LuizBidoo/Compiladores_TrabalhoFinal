@@ -24,7 +24,13 @@ public class Fun{
 		{
 			result += p + ", ";
 		}
-		result = result.substring(0, result.length() - 2);
+		result = result.substring(0, result.length() - 2) + ") {\n";
+
+		for(Comando c: body){
+			result += "    " +  c.toString();
+		}
+
+		result += "\n}\n";
 		return result;
 	}
 }

@@ -14,7 +14,7 @@ public class CAtribuicao extends Comando{
 	} 
 
 	public String toString() {
-		return "a = 5;";	
+		return var + " = " + exp + "\n";	
 	}
 
 }

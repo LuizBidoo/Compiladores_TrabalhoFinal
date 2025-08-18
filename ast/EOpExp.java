@@ -15,4 +15,7 @@ public class EOpExp extends Exp{
 	  
 	} 
 
+	public String toString(){
+		return arg1 + " " + op + " " + arg2;
+	}	
 }

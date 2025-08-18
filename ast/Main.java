@@ -14,12 +14,12 @@ public class Main{
 	}
 
 	public String toString() {
-		String AAAAAA = "";
+		String AAAAAA = "public static void main(){\n";
 		for(Comando c: coms)
 		{
-			AAAAAA +=  c.toString();
+			AAAAAA +=  "    " + c.toString();
 		}
-
+		AAAAAA += "}\n";
 		return AAAAAA;
 	}
 

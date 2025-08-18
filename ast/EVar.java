@@ -11,4 +11,8 @@ public class EVar extends Exp{
 	  
 	} 
 
+	public String toString() {
+		return var;	
+	}
+
 }

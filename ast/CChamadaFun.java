@@ -15,7 +15,11 @@ public class CChamadaFun extends Comando{
 	} 
 
 	public String toString() {
-		return "fun(a,b);";	
+		String result = fun + "(";	
+		for(Exp e: args){
+			result += e.toString();
+		}
+		return result;
 	}
 
 }

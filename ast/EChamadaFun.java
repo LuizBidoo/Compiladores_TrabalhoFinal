@@ -12,8 +12,14 @@ public class EChamadaFun extends Exp{
 	  this.args = args;
 	} 
 
-	public String toString(){
-		return "fun(a,b);";
+	public String toString() {
+		String result = fun + "(";	
+		for(Exp e: args){
+			result += e.toString() + ", ";
+		}
+
+		result = result.substring(0, result.length() - 2) + ") {\n";
+		return result;
 	}
 
 }
