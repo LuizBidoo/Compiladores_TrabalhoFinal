@@ -14,7 +14,12 @@ public class Prog{
     @Override
     public String toString()
     {
-        return main.toString();
+        String result = "import java.util.Scanner;\n\n" + main.toString();
+        for(Fun f: fun){
+            result += f;
+        }
+
+        return result;
     }
 }
 

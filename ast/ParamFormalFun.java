@@ -8,4 +8,8 @@ public class ParamFormalFun{
    	this.type = type;
    	this.var = var;
    }
+
+   public String toString(){
+      return type + " " + var;
+   }
 }

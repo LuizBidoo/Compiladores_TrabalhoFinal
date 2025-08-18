@@ -8,6 +8,7 @@ public class Bela {
   public static void main(String args[]) throws ParseException, IOException {
     Bela analisador = new Bela(new FileInputStream(args[0]));
     Prog programa = analisador.BELA();
+    System.out.println(programa);
     // Aqui você pode adicionar código para processar a AST
   }
 

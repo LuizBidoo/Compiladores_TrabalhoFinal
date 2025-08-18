@@ -19,6 +19,12 @@ public class Fun{
 	}
 
 	public String toString() {
-		return "public static void main";
+		String result = "public " + retorno + " " + nome + "(";
+		for(ParamFormalFun p: params)
+		{
+			result += p + ", ";
+		}
+		result = result.substring(0, result.length() - 2);
+		return result;
 	}
 }

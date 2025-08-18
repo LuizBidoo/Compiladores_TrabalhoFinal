@@ -1,0 +1,10 @@
+main() {
+  var float x;
+  x = 5.0;
+  
+  while (x > 0.0) {
+    printLn x;
+    x = (x - 1.0);
+  };
+
+}
